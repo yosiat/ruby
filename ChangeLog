@@ -22,6 +22,11 @@ Sat Oct 17 13:19:10 2015  Nobuyoshi Nakada  <nobu@ruby-lang.org>
 	  merging load_file_internal and load_file_internal2, and remove
 	  nested rb_protect and rb_ensure.
 
+Sat Oct 17 08:47:41 2015  Yosi Attias  <yosy101@gmail.com>
+
+	* ext/objspace/objspace_dump.c(dump_object): Dump entries of hash - the key & values.
+	* test/objspace/test_objspace.rb: Adding test for the entires - test_dump_entries_empty_hash and test_dump_entries_hash
+
 Sat Oct 17 05:28:32 2015  Rei Odaira  <Rei.Odaira@gmail.com>
 
 	* test/ruby/test_symbol.rb (test_symbol_fstr_leak): add a warm-up

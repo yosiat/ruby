@@ -125,6 +125,64 @@ obj_type(VALUE obj)
     return "UNKNOWN";
 }
 
+struct hash_keys_iter {
+  struct dump_config *dc;
+  int cur_i;
+};
+
+static void
+dump_variable_value(struct dump_config *dc, VALUE value)
+{
+  if(!SPECIAL_CONST_P(value)) {
+    dump_append(dc, "\"%p\"", (void *)value);
+  } else {
+    dump_append_string_value(dc, rb_obj_as_string(rb_funcallv(value, idTo_s, 0, 0)));
+  }
+}
+
+
+static int
+hash_entries_iter(VALUE key, VALUE value, VALUE arg)
+{
+  struct hash_keys_iter *keys_iter = (struct hash_keys_iter *)arg;
+  if(keys_iter->cur_i > 0) {
+    dump_append(keys_iter->dc, ",");
+  }
+
+  dump_append(keys_iter->dc, "{");
+
+  dump_append(keys_iter->dc, "\"key\":");
+  dump_variable_value(keys_iter->dc, key);
+  dump_append(keys_iter->dc, ",");
+
+  dump_append(keys_iter->dc, "\"value\":");
+  dump_variable_value(keys_iter->dc, value);
+
+  dump_append(keys_iter->dc, "}");
+
+  keys_iter->cur_i++;
+  return ST_CONTINUE;
+}
+
+static void
+dump_hash_entries(struct dump_config *dc, VALUE hash)
+{
+  if(RHASH_SIZE(hash) == 0) {
+    dump_append(dc, ", \"entries\": []");
+  } else {
+
+    struct hash_keys_iter arg;
+    arg.dc = dc;
+    arg.cur_i = 0;
+
+
+    dump_append(dc, ", \"entries\": [");
+    rb_hash_foreach(hash, hash_entries_iter, (VALUE)&arg);
+    dump_append(dc, "]");
+  }
+}
+
+
 static void
 reachable_object_i(VALUE ref, void *data)
 {
@@ -200,6 +258,7 @@ dump_object(VALUE obj, struct dump_config *dc)
 
       case T_HASH:
 	dump_append(dc, ", \"size\":%ld", RHASH_SIZE(obj));
+	dump_hash_entries(dc, obj);
 	if (FL_TEST(obj, HASH_PROC_DEFAULT))
 	    dump_append(dc, ", \"default\":\"%p\"", (void *)RHASH_IFNONE(obj));
 	break;
